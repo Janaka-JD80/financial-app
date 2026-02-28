@@ -1,0 +1,5 @@
+{
+  "name": "FinManage",
+  "description": "A comprehensive financial management application to track expenses, income, assets, liabilities, and funds.",
+  "requestFramePermissions": []
+}
