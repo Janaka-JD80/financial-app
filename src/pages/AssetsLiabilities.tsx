@@ -1,4 +1,4 @@
-import { useAssets, useCreateAsset, useLiabilities, useCreateLiability } from '../hooks/useApi';
+import { useAssets, useCreateAsset, useUpdateAsset, useLiabilities, useCreateLiability, useUpdateLiability } from '../hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, differenceInMonths } from 'date-fns';
+import { Edit2 } from 'lucide-react';
 
 const assetSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -25,7 +26,9 @@ export default function AssetsLiabilities() {
   const { data: assets } = useAssets();
   const { data: liabilities } = useLiabilities();
   const createAsset = useCreateAsset();
+  const updateAsset = useUpdateAsset();
   const createLiability = useCreateLiability();
+  const updateLiability = useUpdateLiability();
 
   const { register: registerAsset, handleSubmit: handleAssetSubmit, reset: resetAsset } = useForm<z.infer<typeof assetSchema>>({
     resolver: zodResolver(assetSchema),
@@ -49,6 +52,20 @@ export default function AssetsLiabilities() {
     const monthsPassed = differenceInMonths(new Date(), new Date(asset.purchase_date));
     const currentValue = Number(asset.purchase_value) - (monthsPassed * Number(asset.monthly_decay));
     return Math.max(0, currentValue);
+  };
+
+  const handleEditAsset = (id: string, currentName: string) => {
+    const newName = window.prompt('Enter new asset name:', currentName);
+    if (newName && newName.trim() !== currentName) {
+      updateAsset.mutate({ id, updates: { name: newName.trim() } });
+    }
+  };
+
+  const handleEditLiability = (id: string, currentName: string) => {
+    const newName = window.prompt('Enter new liability name:', currentName);
+    if (newName && newName.trim() !== currentName) {
+      updateLiability.mutate({ id, updates: { name: newName.trim() } });
+    }
   };
 
   return (
@@ -83,7 +100,18 @@ export default function AssetsLiabilities() {
                   <div key={asset.id} className="p-4 border border-zinc-100 rounded-xl">
                     <div className="flex justify-between items-center mb-2">
                       <p className="font-medium">{asset.name}</p>
-                      <p className="font-bold text-emerald-600">${calculateCurrentAssetValue(asset).toFixed(2)}</p>
+                      <div className="flex items-center space-x-4">
+                        <p className="font-bold text-emerald-600">${calculateCurrentAssetValue(asset).toFixed(2)}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditAsset(asset.id, asset.name)}
+                          className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                          title="Edit Asset Name"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex justify-between text-xs text-zinc-500">
                       <span>Purchased: {format(new Date(asset.purchase_date), 'MMM yyyy')}</span>
@@ -123,7 +151,18 @@ export default function AssetsLiabilities() {
                   <div key={liability.id} className="p-4 border border-zinc-100 rounded-xl">
                     <div className="flex justify-between items-center mb-2">
                       <p className="font-medium">{liability.name}</p>
-                      <p className="font-bold text-red-600">${Number(liability.remaining_amount).toFixed(2)}</p>
+                      <div className="flex items-center space-x-4">
+                        <p className="font-bold text-red-600">${Number(liability.remaining_amount).toFixed(2)}</p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditLiability(liability.id, liability.name)}
+                          className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                          title="Edit Liability Name"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex justify-between text-xs text-zinc-500">
                       <span>Ends: {format(new Date(liability.end_date), 'MMM yyyy')}</span>

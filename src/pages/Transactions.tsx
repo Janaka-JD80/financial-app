@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useTransactions, useCreateTransaction, useAccounts, useCategories, useActiveGroups, useCreateGroup, useCreateCategory } from '../hooks/useApi';
+import { useTransactions, useCreateTransaction, useDeleteTransaction, useUpdateTransaction, useAccounts, useCategories, useActiveGroups, useCreateGroup, useCreateCategory, useDeleteCategory, useDeleteGroup, useUpdateCategory, useUpdateGroup } from '../hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { format } from 'date-fns';
+import { Trash2, Edit2, X } from 'lucide-react';
 
 const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
@@ -29,14 +30,21 @@ export default function Transactions() {
   const { data: expenseCategories } = useCategories('expense');
   const { data: groups } = useActiveGroups();
   const createTransaction = useCreateTransaction();
+  const updateTransaction = useUpdateTransaction();
+  const deleteTransaction = useDeleteTransaction();
   const createGroup = useCreateGroup();
   const createCategory = useCreateCategory();
+  const deleteCategory = useDeleteCategory();
+  const deleteGroup = useDeleteGroup();
+  const updateCategory = useUpdateCategory();
+  const updateGroup = useUpdateGroup();
 
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [newGroupName, setNewGroupName] = useState('');
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<TransactionFormValues>({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'expense',
@@ -48,15 +56,66 @@ export default function Transactions() {
   const isRecurring = watch('is_recurring');
 
   const onSubmit = (data: TransactionFormValues) => {
-    createTransaction.mutate(data, {
-      onSuccess: () => {
-        reset({
-          ...data,
-          amount: 0,
-          description: '',
-        });
-      }
+    if (editingTransactionId) {
+      updateTransaction.mutate({ id: editingTransactionId, updates: data }, {
+        onSuccess: () => {
+          setEditingTransactionId(null);
+          reset({
+            ...data,
+            amount: 0,
+            description: '',
+          });
+        }
+      });
+    } else {
+      createTransaction.mutate(data, {
+        onSuccess: () => {
+          reset({
+            ...data,
+            amount: 0,
+            description: '',
+          });
+        }
+      });
+    }
+  };
+
+  const handleEditTransaction = (tx: any) => {
+    setEditingTransactionId(tx.id);
+    setType(tx.type as 'income' | 'expense');
+    setValue('type', tx.type as 'income' | 'expense');
+    setValue('amount', Number(tx.amount));
+    setValue('account_id', tx.account_id);
+    setValue('category_id', tx.category_id);
+    setValue('group_id', tx.group_id || '');
+    setValue('transaction_date', tx.transaction_date.split('T')[0]);
+    setValue('description', tx.description || '');
+    setValue('is_recurring', tx.is_recurring || false);
+    setValue('recurrence_interval', tx.recurrence_interval || '');
+    
+    // Scroll to top to see the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingTransactionId(null);
+    reset({
+      type: 'expense',
+      transaction_date: new Date().toISOString().split('T')[0],
+      is_recurring: false,
+      amount: 0,
+      description: '',
+      account_id: '',
+      category_id: '',
+      group_id: '',
     });
+    setType('expense');
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      deleteTransaction.mutate(id);
+    }
   };
 
   const handleCreateGroup = () => {
@@ -67,11 +126,41 @@ export default function Transactions() {
     }
   };
 
+  const handleDeleteGroup = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this group?')) {
+      deleteGroup.mutate(id, {
+        onError: (error: any) => alert(`Failed to delete group: ${error.message || 'Unknown error'}`)
+      });
+    }
+  };
+
+  const handleEditGroup = (id: string, currentName: string) => {
+    const newName = window.prompt('Enter new group name:', currentName);
+    if (newName && newName.trim() !== currentName) {
+      updateGroup.mutate({ id, updates: { name: newName.trim() } });
+    }
+  };
+
   const handleCreateCategory = () => {
     if (newCategoryName.trim()) {
       createCategory.mutate({ name: newCategoryName.trim(), type }, {
         onSuccess: () => setNewCategoryName('')
       });
+    }
+  };
+
+  const handleDeleteCategory = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      deleteCategory.mutate(id, {
+        onError: (error: any) => alert(`Failed to delete category: ${error.message || 'Unknown error'}`)
+      });
+    }
+  };
+
+  const handleEditCategory = (id: string, currentName: string) => {
+    const newName = window.prompt('Enter new category name:', currentName);
+    if (newName && newName.trim() !== currentName) {
+      updateCategory.mutate({ id, name: newName.trim() });
     }
   };
 
@@ -87,7 +176,14 @@ export default function Transactions() {
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Add Transaction</CardTitle>
+              <CardTitle className="flex justify-between items-center">
+                <span>{editingTransactionId ? 'Edit Transaction' : 'Add Transaction'}</span>
+                {editingTransactionId && (
+                  <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-zinc-500 hover:text-zinc-700">
+                    <X className="w-4 h-4 mr-1" /> Cancel
+                  </Button>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -183,8 +279,10 @@ export default function Transactions() {
                   />
                 )}
 
-                <Button type="submit" className="w-full" disabled={createTransaction.isPending}>
-                  {createTransaction.isPending ? 'Saving...' : 'Save Transaction'}
+                <Button type="submit" className="w-full" disabled={createTransaction.isPending || updateTransaction.isPending}>
+                  {editingTransactionId 
+                    ? (updateTransaction.isPending ? 'Updating...' : 'Update Transaction') 
+                    : (createTransaction.isPending ? 'Saving...' : 'Save Transaction')}
                 </Button>
               </form>
             </CardContent>
@@ -195,21 +293,49 @@ export default function Transactions() {
               <CardTitle>Create Category</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col space-y-2">
-                <p className="text-xs text-zinc-500 mb-1">Creates a new {type} category</p>
-                <div className="flex space-x-2">
-                  <Input 
-                    placeholder="New category name" 
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleCreateCategory}
-                    disabled={!newCategoryName.trim() || createCategory.isPending}
-                  >
-                    Add
-                  </Button>
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-2">
+                  <p className="text-xs text-zinc-500 mb-1">Creates a new {type} category</p>
+                  <div className="flex space-x-2">
+                    <Input 
+                      placeholder="New category name" 
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                    />
+                    <Button 
+                      type="button" 
+                      onClick={handleCreateCategory}
+                      disabled={!newCategoryName.trim() || createCategory.isPending}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {categories?.map(c => (
+                    <div key={c.id} className="flex justify-between items-center p-2 bg-zinc-50 rounded-lg">
+                      <span className="text-sm font-medium">{c.name}</span>
+                      <div className="flex space-x-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditCategory(c.id, c.name)}
+                          className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteCategory(c.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </CardContent>
@@ -220,19 +346,47 @@ export default function Transactions() {
               <CardTitle>Create Group</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex space-x-2">
-                <Input 
-                  placeholder="New group name" 
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
-                />
-                <Button 
-                  type="button" 
-                  onClick={handleCreateGroup}
-                  disabled={!newGroupName.trim() || createGroup.isPending}
-                >
-                  Add
-                </Button>
+              <div className="flex flex-col space-y-4">
+                <div className="flex space-x-2">
+                  <Input 
+                    placeholder="New group name" 
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleCreateGroup}
+                    disabled={!newGroupName.trim() || createGroup.isPending}
+                  >
+                    Add
+                  </Button>
+                </div>
+
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {groups?.map(g => (
+                    <div key={g.id} className="flex justify-between items-center p-2 bg-zinc-50 rounded-lg">
+                      <span className="text-sm font-medium">{g.name}</span>
+                      <div className="flex space-x-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditGroup(g.id, g.name)}
+                          className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteGroup(g.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -255,7 +409,8 @@ export default function Transactions() {
                         <th className="px-4 py-3">Description</th>
                         <th className="px-4 py-3">Category</th>
                         <th className="px-4 py-3">Account</th>
-                        <th className="px-4 py-3 text-right rounded-r-xl">Amount</th>
+                        <th className="px-4 py-3 text-right">Amount</th>
+                        <th className="px-4 py-3 text-right rounded-r-xl">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -271,6 +426,28 @@ export default function Transactions() {
                           <td className="px-4 py-4 text-zinc-600">{tx.accounts?.name}</td>
                           <td className={`px-4 py-4 text-right font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
                             {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="flex justify-end space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditTransaction(tx)}
+                                className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                                title="Edit Transaction"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleDeleteTransaction(tx.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                                title="Delete Transaction"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}

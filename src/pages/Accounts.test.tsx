@@ -1,13 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import Accounts from './Accounts';
-import { useAccounts, useCreateAccount, useFunds, useCreateFund } from '../hooks/useApi';
+import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount, useFunds, useCreateFund, useUpdateFund } from '../hooks/useApi';
 
 jest.mock('../hooks/useApi');
 
 const mockUseAccounts = useAccounts as jest.Mock;
 const mockUseCreateAccount = useCreateAccount as jest.Mock;
+const mockUseUpdateAccount = useUpdateAccount as jest.Mock;
+const mockUseDeleteAccount = useDeleteAccount as jest.Mock;
 const mockUseFunds = useFunds as jest.Mock;
 const mockUseCreateFund = useCreateFund as jest.Mock;
+const mockUseUpdateFund = useUpdateFund as jest.Mock;
 
 describe('Accounts Page', () => {
   beforeEach(() => {
@@ -15,8 +18,11 @@ describe('Accounts Page', () => {
     
     mockUseAccounts.mockReturnValue({ data: [{ id: '1', name: 'My Bank', type: 'bank', balance: 1000 }] });
     mockUseCreateAccount.mockReturnValue({ mutate: jest.fn(), isPending: false });
+    mockUseUpdateAccount.mockReturnValue({ mutate: jest.fn(), isPending: false });
+    mockUseDeleteAccount.mockReturnValue({ mutate: jest.fn(), isPending: false });
     mockUseFunds.mockReturnValue({ data: [{ id: '1', name: 'Emergency', target_amount: 5000, current_balance: 1000 }] });
     mockUseCreateFund.mockReturnValue({ mutate: jest.fn(), isPending: false });
+    mockUseUpdateFund.mockReturnValue({ mutate: jest.fn(), isPending: false });
   });
 
   it('renders accounts and funds', () => {

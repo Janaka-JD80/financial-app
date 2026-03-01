@@ -1,34 +1,43 @@
-import { useState } from 'react';
-import { useTransactions, useActiveGroups, useGroupSummary } from '../hooks/useApi';
+import { useState, useMemo } from 'react';
+import { useTransactions, useActiveGroups, useGroupSummary, useTransactionReport, useCategories } from '../hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Select } from '../components/ui/Input';
+import { Input, Select } from '../components/ui/Input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { aggregateReportData } from '../api';
 
 export default function Reports() {
-  const { data: transactions } = useTransactions();
   const { data: groups } = useActiveGroups();
-  const [selectedGroup, setSelectedGroup] = useState<string>('');
+  const { data: incomeCategories } = useCategories('income');
+  const { data: expenseCategories } = useCategories('expense');
   
+  const allCategories = useMemo(() => {
+    return [...(incomeCategories || []), ...(expenseCategories || [])];
+  }, [incomeCategories, expenseCategories]);
+
+  const [selectedGroup, setSelectedGroup] = useState<string>('');
   const { data: groupSummary } = useGroupSummary(selectedGroup);
 
-  // Process data for monthly chart
-  const monthlyData = transactions?.reduce((acc: any[], tx) => {
-    const month = format(parseISO(tx.transaction_date), 'MMM yyyy');
-    const existing = acc.find(item => item.month === month);
-    
-    if (existing) {
-      if (tx.type === 'income') existing.income += Number(tx.amount);
-      else existing.expense += Number(tx.amount);
-    } else {
-      acc.push({
-        month,
-        income: tx.type === 'income' ? Number(tx.amount) : 0,
-        expense: tx.type === 'expense' ? Number(tx.amount) : 0,
-      });
-    }
-    return acc;
-  }, []) || [];
+  // Advanced Report State
+  const [reportFilters, setReportFilters] = useState({
+    startDate: format(startOfMonth(subMonths(new Date(), 5)), 'yyyy-MM-dd'),
+    endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
+    groupId: '',
+    categoryId: '',
+    timeframe: 'monthly' as 'daily' | 'monthly' | 'annually'
+  });
+
+  const { data: reportTransactions, isLoading: isReportLoading } = useTransactionReport({
+    startDate: reportFilters.startDate,
+    endDate: reportFilters.endDate,
+    groupId: reportFilters.groupId || undefined,
+    categoryId: reportFilters.categoryId || undefined,
+  });
+
+  const aggregatedData = useMemo(() => {
+    if (!reportTransactions) return [];
+    return aggregateReportData(reportTransactions, reportFilters.timeframe);
+  }, [reportTransactions, reportFilters.timeframe]);
 
   return (
     <div className="space-y-6">
@@ -36,21 +45,64 @@ export default function Reports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Income vs Expense (Monthly)</CardTitle>
+          <CardTitle>Advanced Transaction Report</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <Input 
+              label="Start Date" 
+              type="date" 
+              value={reportFilters.startDate}
+              onChange={(e) => setReportFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            />
+            <Input 
+              label="End Date" 
+              type="date" 
+              value={reportFilters.endDate}
+              onChange={(e) => setReportFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            />
+            <Select
+              label="Timeframe"
+              value={reportFilters.timeframe}
+              onChange={(e) => setReportFilters(prev => ({ ...prev, timeframe: e.target.value as any }))}
+              options={[
+                { label: 'Daily', value: 'daily' },
+                { label: 'Monthly', value: 'monthly' },
+                { label: 'Annually', value: 'annually' },
+              ]}
+            />
+            <Select
+              label="Filter by Group"
+              value={reportFilters.groupId}
+              onChange={(e) => setReportFilters(prev => ({ ...prev, groupId: e.target.value }))}
+              options={[{ label: 'All Groups', value: '' }, ...(groups?.map(g => ({ label: g.name, value: g.id })) || [])]}
+            />
+            <Select
+              label="Filter by Category"
+              value={reportFilters.categoryId}
+              onChange={(e) => setReportFilters(prev => ({ ...prev, categoryId: e.target.value }))}
+              options={[{ label: 'All Categories', value: '' }, ...(allCategories?.map(c => ({ label: c.name, value: c.id })) || [])]}
+            />
+          </div>
+
           <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData.reverse()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: '#f4f4f5' }} />
-                <Legend />
-                <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} name="Income" />
-                <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} name="Expense" />
-              </BarChart>
-            </ResponsiveContainer>
+            {isReportLoading ? (
+              <div className="h-full flex items-center justify-center text-zinc-500">Loading report data...</div>
+            ) : aggregatedData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={aggregatedData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e4e4e7" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip cursor={{ fill: '#f4f4f5' }} />
+                  <Legend />
+                  <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} name="Income" />
+                  <Bar dataKey="expense" fill="#ef4444" radius={[4, 4, 0, 0]} name="Expense" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-zinc-500">No data found for the selected filters.</div>
+            )}
           </div>
         </CardContent>
       </Card>

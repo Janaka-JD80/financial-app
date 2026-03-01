@@ -10,6 +10,20 @@ export const useCreateAccount = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
   });
 };
+export const useUpdateAccount = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: { name?: string; type?: string } }) => api.updateAccount(params.id, params.updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+  });
+};
+export const useDeleteAccount = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteAccount,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+  });
+};
 
 // Categories
 export const useCategories = (type?: 'income' | 'expense') => useQuery({ queryKey: ['categories', type], queryFn: () => api.getCategories(type) });
@@ -20,6 +34,20 @@ export const useCreateCategory = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   });
 };
+export const useUpdateCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; name: string }) => api.updateCategory(params.id, params.name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+};
+export const useDeleteCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteCategory,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+};
 
 // Groups
 export const useActiveGroups = () => useQuery({ queryKey: ['groups'], queryFn: api.getActiveGroups });
@@ -27,6 +55,20 @@ export const useCreateGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: { name: string; description?: string }) => api.createGroup(params.name, params.description),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] }),
+  });
+};
+export const useUpdateGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: { name?: string; description?: string; is_active?: boolean } }) => api.updateGroup(params.id, params.updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] }),
+  });
+};
+export const useDeleteGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteGroup,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['groups'] }),
   });
 };
@@ -43,6 +85,20 @@ export const useCreateTransaction = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 };
+export const useUpdateTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: any }) => api.updateTransaction(params.id, params.updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
+};
+export const useDeleteTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteTransaction,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+  });
+};
 
 // Assets
 export const useAssets = () => useQuery({ queryKey: ['assets'], queryFn: api.getAssets });
@@ -51,6 +107,13 @@ export const useCreateAsset = () => {
   return useMutation({
     mutationFn: (params: { name: string; purchase_value: number; monthly_decay: number; purchase_date: string }) => 
       api.createAsset(params.name, params.purchase_value, params.monthly_decay, params.purchase_date),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assets'] }),
+  });
+};
+export const useUpdateAsset = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: { name?: string; monthly_decay?: number } }) => api.updateAsset(params.id, params.updates),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assets'] }),
   });
 };
@@ -65,6 +128,13 @@ export const useCreateLiability = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['liabilities'] }),
   });
 };
+export const useUpdateLiability = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: { name?: string; remaining_amount?: number; end_date?: string } }) => api.updateLiability(params.id, params.updates),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['liabilities'] }),
+  });
+};
 
 // Funds
 export const useFunds = () => useQuery({ queryKey: ['funds'], queryFn: api.getFunds });
@@ -73,6 +143,13 @@ export const useCreateFund = () => {
   return useMutation({
     mutationFn: (params: { name: string; target_amount: number; auto_add_monthly?: number }) => 
       api.createFund(params.name, params.target_amount, params.auto_add_monthly),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['funds'] }),
+  });
+};
+export const useUpdateFund = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { id: string; updates: { name?: string; target_amount?: number; auto_add_monthly?: number } }) => api.updateFund(params.id, params.updates),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['funds'] }),
   });
 };
@@ -93,4 +170,10 @@ export const useGroupSummary = (groupId: string) => useQuery({
   queryKey: ['groupSummary', groupId],
   queryFn: () => api.getGroupSummary(groupId),
   enabled: !!groupId,
+});
+
+export const useTransactionReport = (filters: api.ReportFilters) => useQuery({
+  queryKey: ['transactionReport', filters],
+  queryFn: () => api.getTransactionReport(filters),
+  enabled: !!filters.startDate && !!filters.endDate,
 });
