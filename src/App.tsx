@@ -24,7 +24,8 @@ export default function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
-        <Router>
+        {/* ADD THE BASENAME PROP HERE */}
+        <Router basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
