@@ -1,7 +1,8 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Receipt, Wallet, PiggyBank, Briefcase, BarChart3 } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Receipt, Wallet, PiggyBank, Briefcase, BarChart3, LogOut } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { signOutUser } from '../api/auth';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,6 +18,16 @@ const navigation = [
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await signOutUser();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-zinc-50/50 font-sans text-zinc-900">
@@ -54,16 +65,30 @@ export function Layout() {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-zinc-100">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-zinc-500 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+          >
+            <LogOut className="mr-3 flex-shrink-0 h-5 w-5" aria-hidden="true" />
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden pb-16 md:pb-0">
         {/* Mobile Header */}
-        <div className="md:hidden h-16 bg-white border-b border-zinc-200 flex items-center px-4 z-20 shadow-sm shrink-0">
-          <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center mr-3">
-            <PiggyBank className="w-5 h-5 text-white" />
+        <div className="md:hidden h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-4 z-20 shadow-sm shrink-0">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center mr-3">
+              <PiggyBank className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">FinManage</span>
           </div>
-          <span className="text-xl font-bold tracking-tight">FinManage</span>
+          <button onClick={handleLogout} className="p-2 text-zinc-500 hover:text-red-600">
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">

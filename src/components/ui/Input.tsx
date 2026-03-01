@@ -7,15 +7,17 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, id, ...props }, ref) => {
+    const inputId = id || props.name;
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-zinc-700 mb-1.5">
             {label}
           </label>
         )}
         <input
+          id={inputId}
           ref={ref}
           className={cn(
             "flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
@@ -38,15 +40,17 @@ export interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, options, ...props }, ref) => {
+  ({ className, label, error, options, id, ...props }, ref) => {
+    const selectId = id || props.name;
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+          <label htmlFor={selectId} className="block text-sm font-medium text-zinc-700 mb-1.5">
             {label}
           </label>
         )}
         <select
+          id={selectId}
           ref={ref}
           className={cn(
             "flex h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
