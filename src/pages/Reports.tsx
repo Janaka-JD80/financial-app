@@ -2,9 +2,11 @@ import { useState, useMemo } from 'react';
 import { useTransactions, useActiveGroups, useGroupSummary, useTransactionReport, useCategories } from '../hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Input, Select } from '../components/ui/Input';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, parseISO, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { aggregateReportData } from '../api';
+
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1'];
 
 export default function Reports() {
   const { data: groups } = useActiveGroups();
@@ -38,6 +40,34 @@ export default function Reports() {
     if (!reportTransactions) return [];
     return aggregateReportData(reportTransactions, reportFilters.timeframe);
   }, [reportTransactions, reportFilters.timeframe]);
+
+  const categoryBreakdown = useMemo(() => {
+    if (!reportTransactions) return { income: [], expense: [] };
+
+    const incomeMap = new Map<string, number>();
+    const expenseMap = new Map<string, number>();
+
+    reportTransactions.forEach(tx => {
+      const categoryName = tx.categories?.name || 'Uncategorized';
+      const amount = Number(tx.amount);
+
+      if (tx.type === 'income') {
+        incomeMap.set(categoryName, (incomeMap.get(categoryName) || 0) + amount);
+      } else if (tx.type === 'expense') {
+        expenseMap.set(categoryName, (expenseMap.get(categoryName) || 0) + amount);
+      }
+    });
+
+    const formatData = (map: Map<string, number>) => 
+      Array.from(map.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+    return {
+      income: formatData(incomeMap),
+      expense: formatData(expenseMap)
+    };
+  }, [reportTransactions]);
 
   return (
     <div className="space-y-6">
@@ -106,6 +136,74 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Income by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 w-full">
+              {categoryBreakdown.income.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryBreakdown.income}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {categoryBreakdown.income.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-zinc-500">No income data</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Expense by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 w-full">
+              {categoryBreakdown.expense.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryBreakdown.expense}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {categoryBreakdown.expense.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-zinc-500">No expense data</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
