@@ -38,6 +38,15 @@ export const getCategories = async (type?: 'income' | 'expense'): Promise<Catego
   return data;
 };
 
+export const createCategory = async (name: string, type: 'income' | 'expense'): Promise<Category[]> => {
+  const { data, error } = await supabase
+    .from('categories')
+    .insert([{ name, type }])
+    .select();
+  if (error) throw error;
+  return data;
+};
+
 // --- TRANSACTION GROUPS ---
 export const getActiveGroups = async (): Promise<TransactionGroup[]> => {
   const { data, error } = await supabase

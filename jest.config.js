@@ -10,6 +10,14 @@ export default {
     '^.+\\.tsx?$': ['ts-jest', {
       diagnostics: {
         ignoreCodes: [1343]
+      },
+      astTransformers: {
+        before: [
+          {
+            path: 'ts-jest-mock-import-meta',
+            options: { metaObjectReplacement: { env: { VITE_SUPABASE_URL: 'https://mock.supabase.co', VITE_SUPABASE_ANON_KEY: 'mock' } } }
+          }
+        ]
       }
     }],
   },

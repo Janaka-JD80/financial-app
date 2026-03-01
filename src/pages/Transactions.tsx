@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useTransactions, useCreateTransaction, useAccounts, useCategories, useActiveGroups, useCreateGroup } from '../hooks/useApi';
+import { useTransactions, useCreateTransaction, useAccounts, useCategories, useActiveGroups, useCreateGroup, useCreateCategory } from '../hooks/useApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
@@ -30,9 +30,11 @@ export default function Transactions() {
   const { data: groups } = useActiveGroups();
   const createTransaction = useCreateTransaction();
   const createGroup = useCreateGroup();
+  const createCategory = useCreateCategory();
 
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [newGroupName, setNewGroupName] = useState('');
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -48,7 +50,6 @@ export default function Transactions() {
   const onSubmit = (data: TransactionFormValues) => {
     createTransaction.mutate(data, {
       onSuccess: () => {
-        // Keep inputs intact as requested, but maybe clear amount and description
         reset({
           ...data,
           amount: 0,
@@ -66,12 +67,20 @@ export default function Transactions() {
     }
   };
 
+  const handleCreateCategory = () => {
+    if (newCategoryName.trim()) {
+      createCategory.mutate({ name: newCategoryName.trim(), type }, {
+        onSuccess: () => setNewCategoryName('')
+      });
+    }
+  };
+
   const categories = type === 'income' ? incomeCategories : expenseCategories;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-zinc-900">Transactions</h1>
+        <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">Transactions</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -183,6 +192,31 @@ export default function Transactions() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Create Category</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col space-y-2">
+                <p className="text-xs text-zinc-500 mb-1">Creates a new {type} category</p>
+                <div className="flex space-x-2">
+                  <Input 
+                    placeholder="New category name" 
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={handleCreateCategory}
+                    disabled={!newCategoryName.trim() || createCategory.isPending}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Create Group</CardTitle>
             </CardHeader>
             <CardContent>
@@ -215,23 +249,27 @@ export default function Transactions() {
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left text-zinc-500">
-                    <thead className="text-xs text-zinc-700 uppercase bg-zinc-50">
+                    <thead className="text-xs text-zinc-700 uppercase bg-zinc-50 rounded-xl">
                       <tr>
-                        <th className="px-4 py-3">Date</th>
+                        <th className="px-4 py-3 rounded-l-xl">Date</th>
                         <th className="px-4 py-3">Description</th>
                         <th className="px-4 py-3">Category</th>
                         <th className="px-4 py-3">Account</th>
-                        <th className="px-4 py-3 text-right">Amount</th>
+                        <th className="px-4 py-3 text-right rounded-r-xl">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       {transactions?.map((tx) => (
-                        <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-                          <td className="px-4 py-3">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')}</td>
-                          <td className="px-4 py-3 font-medium text-zinc-900">{tx.description || '-'}</td>
-                          <td className="px-4 py-3">{tx.categories?.name}</td>
-                          <td className="px-4 py-3">{tx.accounts?.name}</td>
-                          <td className={`px-4 py-3 text-right font-medium ${tx.type === 'income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
+                        <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-4 py-4 whitespace-nowrap">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')}</td>
+                          <td className="px-4 py-4 font-medium text-zinc-900">{tx.description || '-'}</td>
+                          <td className="px-4 py-4">
+                            <span className="px-2 py-1 bg-zinc-100 text-zinc-600 rounded-md text-xs font-medium">
+                              {tx.categories?.name}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-zinc-600">{tx.accounts?.name}</td>
+                          <td className={`px-4 py-4 text-right font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
                             {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}
                           </td>
                         </tr>

@@ -13,6 +13,13 @@ export const useCreateAccount = () => {
 
 // Categories
 export const useCategories = (type?: 'income' | 'expense') => useQuery({ queryKey: ['categories', type], queryFn: () => api.getCategories(type) });
+export const useCreateCategory = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { name: string; type: 'income' | 'expense' }) => api.createCategory(params.name, params.type),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+};
 
 // Groups
 export const useActiveGroups = () => useQuery({ queryKey: ['groups'], queryFn: api.getActiveGroups });
