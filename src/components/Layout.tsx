@@ -1,12 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Receipt, Wallet, PiggyBank, Briefcase, BarChart3, LogOut } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '../lib/utils';
 import { signOutUser } from '../api/auth';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },

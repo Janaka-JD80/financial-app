@@ -1,20 +1,46 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FinManage
 
-# Run and deploy your AI Studio app
+A comprehensive financial management application built with React, Vite, Tailwind CSS, TypeScript, and Supabase. FinManage helps you track your expenses, income, assets, liabilities, and savings funds.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/d67a5148-01db-4373-9412-1304785d2361
+- **Dashboard**: High-level overview of your monthly net income, asset vs liability ratio, and recent transaction history.
+- **Transactions**: Track and categorize all your income and expenses. Filter transactions by date range, category, or group.
+- **Accounts**: Manage multiple financial accounts (e.g., cash, bank accounts, credit cards) and keep their balances updated.
+- **Assets & Liabilities**: Keep record of physical/digital assets and track debts and loans (liabilities).
+- **Reports**: Analyze your spending patterns with interactive visual charts (aggregated daily, monthly, or annually).
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+### Prerequisites
 
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd financial-app
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   Copy `.env.example` to `.env` and fill in your Supabase credentials:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Build the application for production:
+   ```bash
+   npm run build
+   ```
