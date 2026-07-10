@@ -9,15 +9,40 @@ import { X } from 'lucide-react';
 import { Account, Category, TransactionGroup } from '../../types';
 
 const transactionSchema = z.object({
-  type: z.enum(['income', 'expense']),
+  type: z.enum(['income', 'expense', 'transfer']),
   amount: z.number().min(0.01, 'Amount must be greater than 0'),
   account_id: z.string().min(1, 'Account is required'),
-  category_id: z.string().min(1, 'Category is required'),
+  to_account_id: z.string().optional(),
+  category_id: z.string().optional(),
   group_id: z.string().optional(),
   transaction_date: z.string().min(1, 'Date is required'),
   description: z.string().optional(),
   is_recurring: z.boolean().optional(),
   recurrence_interval: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === 'transfer') {
+    if (!data.to_account_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Destination account is required',
+        path: ['to_account_id'],
+      });
+    } else if (data.account_id === data.to_account_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Source and destination accounts must be different',
+        path: ['to_account_id'],
+      });
+    }
+  } else {
+    if (!data.category_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Category is required',
+        path: ['category_id'],
+      });
+    }
+  }
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -28,10 +53,10 @@ interface TransactionFormProps {
   expenseCategories: Category[] | undefined;
   groups: TransactionGroup[] | undefined;
   editingTransaction: any | null;
-  type: 'income' | 'expense';
-  onTypeChange: (type: 'income' | 'expense') => void;
+  type: 'income' | 'expense' | 'transfer';
+  onTypeChange: (type: 'income' | 'expense' | 'transfer') => void;
   onCancelEdit: () => void;
-  onSubmit: (data: TransactionFormValues) => void;
+  onSubmit: (data: any) => void;
   isPending: boolean;
 }
 
@@ -61,24 +86,41 @@ export function TransactionForm({
 
   useEffect(() => {
     if (editingTransaction) {
-      onTypeChange(editingTransaction.type);
-      reset({
-        type: editingTransaction.type,
-        amount: Number(editingTransaction.amount),
-        account_id: editingTransaction.account_id,
-        category_id: editingTransaction.category_id,
-        group_id: editingTransaction.group_id || '',
-        transaction_date: editingTransaction.transaction_date.split('T')[0],
-        description: editingTransaction.description || '',
-        is_recurring: editingTransaction.is_recurring || false,
-        recurrence_interval: editingTransaction.recurrence_interval || '',
-      });
+      if (editingTransaction.isTransfer) {
+        onTypeChange('transfer');
+        reset({
+          type: 'transfer',
+          amount: Number(editingTransaction.amount),
+          account_id: editingTransaction.from_account_id,
+          to_account_id: editingTransaction.to_account_id,
+          category_id: '',
+          group_id: editingTransaction.group_id || '',
+          transaction_date: editingTransaction.transaction_date.split('T')[0],
+          description: editingTransaction.userDescription || '',
+          is_recurring: editingTransaction.is_recurring || false,
+          recurrence_interval: editingTransaction.recurrence_interval || '',
+        });
+      } else {
+        onTypeChange(editingTransaction.type);
+        reset({
+          type: editingTransaction.type,
+          amount: Number(editingTransaction.amount),
+          account_id: editingTransaction.account_id,
+          category_id: editingTransaction.category_id || '',
+          group_id: editingTransaction.group_id || '',
+          transaction_date: editingTransaction.transaction_date.split('T')[0],
+          description: editingTransaction.description || '',
+          is_recurring: editingTransaction.is_recurring || false,
+          recurrence_interval: editingTransaction.recurrence_interval || '',
+        });
+      }
     } else {
       onTypeChange('expense');
       reset({
         type: 'expense',
         amount: 0,
         account_id: '',
+        to_account_id: '',
         category_id: '',
         group_id: '',
         transaction_date: new Date().toISOString().split('T')[0],
@@ -93,10 +135,12 @@ export function TransactionForm({
     onSubmit(data);
   };
 
-  const handleTypeChange = (newType: 'income' | 'expense') => {
+  const handleTypeChange = (newType: 'income' | 'expense' | 'transfer') => {
     onTypeChange(newType);
     setValue('type', newType);
-    setValue('category_id', ''); // Reset category when switching type
+    if (newType !== 'transfer') {
+      setValue('category_id', ''); // Reset category when switching type
+    }
   };
 
   const categories = type === 'income' ? incomeCategories : expenseCategories;
@@ -119,7 +163,7 @@ export function TransactionForm({
             <Button
               type="button"
               variant={type === 'expense' ? 'danger' : 'outline'}
-              className="flex-1"
+              className="flex-1 px-2"
               onClick={() => handleTypeChange('expense')}
             >
               Expense
@@ -127,10 +171,18 @@ export function TransactionForm({
             <Button
               type="button"
               variant={type === 'income' ? 'primary' : 'outline'}
-              className="flex-1"
+              className="flex-1 px-2"
               onClick={() => handleTypeChange('income')}
             >
               Income
+            </Button>
+            <Button
+              type="button"
+              variant={type === 'transfer' ? 'secondary' : 'outline'}
+              className="flex-1 px-2"
+              onClick={() => handleTypeChange('transfer')}
+            >
+              Transfer
             </Button>
           </div>
 
@@ -143,25 +195,38 @@ export function TransactionForm({
           />
 
           <Select
-            label="Account"
+            label={type === 'transfer' ? 'From Account' : 'Account'}
             options={accounts?.map(a => ({ label: a.name, value: a.id })) || []}
             {...register('account_id')}
             error={errors.account_id?.message}
           />
 
-          <Select
-            label="Category"
-            options={categories?.map(c => ({ label: c.name, value: c.id })) || []}
-            {...register('category_id')}
-            error={errors.category_id?.message}
-          />
+          {type === 'transfer' && (
+            <Select
+              label="To Account"
+              options={accounts?.map(a => ({ label: a.name, value: a.id })) || []}
+              {...register('to_account_id')}
+              error={errors.to_account_id?.message}
+            />
+          )}
 
-          <Select
-            label="Group (Optional)"
-            options={groups?.map(g => ({ label: g.name, value: g.id })) || []}
-            {...register('group_id')}
-            error={errors.group_id?.message}
-          />
+          {type !== 'transfer' && (
+            <Select
+              label="Category"
+              options={categories?.map(c => ({ label: c.name, value: c.id })) || []}
+              {...register('category_id')}
+              error={errors.category_id?.message}
+            />
+          )}
+
+          {type !== 'transfer' && (
+            <Select
+              label="Group (Optional)"
+              options={groups?.map(g => ({ label: g.name, value: g.id })) || []}
+              {...register('group_id')}
+              error={errors.group_id?.message}
+            />
+          )}
 
           <Input
             label="Date"
@@ -170,11 +235,13 @@ export function TransactionForm({
             error={errors.transaction_date?.message}
           />
 
-          <Input
-            label="Description"
-            {...register('description')}
-            error={errors.description?.message}
-          />
+          {type !== 'transfer' && (
+            <Input
+              label="Description"
+              {...register('description')}
+              error={errors.description?.message}
+            />
+          )}
 
           <div className="flex items-center space-x-2">
             <input
@@ -211,3 +278,4 @@ export function TransactionForm({
     </Card>
   );
 }
+
