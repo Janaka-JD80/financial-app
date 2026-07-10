@@ -3,6 +3,7 @@ import { Button } from '../ui/Button';
 import { Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Transaction } from '../../types';
+import { isTransferTransaction, parseTransferDescription } from '../../lib/utils';
 
 interface TransactionTableProps {
   transactions: Transaction[] | undefined;
@@ -36,43 +37,68 @@ export function TransactionTable({ transactions, isLoading, onEdit, onDelete }: 
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
-                    <td className="px-4 py-4 whitespace-nowrap">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')}</td>
-                    <td className="px-4 py-4 font-medium text-zinc-900">{tx.description || '-'}</td>
-                    <td className="px-4 py-4">
-                      <span className="px-2 py-1 bg-zinc-100 text-zinc-600 rounded-md text-xs font-medium">
-                        {tx.categories?.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-zinc-600">{tx.accounts?.name}</td>
-                    <td className={`px-4 py-4 text-right font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-600' : 'text-zinc-900'}`}>
-                      {tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex justify-end space-x-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => onEdit(tx)}
-                          className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
-                          title="Edit Transaction"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => onDelete(tx.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                          title="Delete Transaction"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {transactions.map((tx) => {
+                  const isTxTransfer = isTransferTransaction(tx);
+                  const transferInfo = parseTransferDescription(tx.description);
+                  
+                  // Use cleaned user description if parsed successfully, otherwise fallback
+                  const displayDescription = transferInfo 
+                    ? (transferInfo.userDescription || `Transfer to/from Account`)
+                    : tx.description || '-';
+
+                  return (
+                    <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                      <td className="px-4 py-4 whitespace-nowrap">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')}</td>
+                      <td className="px-4 py-4 font-medium text-zinc-900">{displayDescription}</td>
+                      <td className="px-4 py-4">
+                        {isTxTransfer ? (
+                          <span className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-xs font-semibold uppercase tracking-wider inline-flex items-center">
+                            Transfer
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-zinc-100 text-zinc-600 rounded-md text-xs font-medium">
+                            {tx.categories?.name || '-'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-zinc-600">{tx.accounts?.name}</td>
+                      <td className={`px-4 py-4 text-right font-semibold whitespace-nowrap ${
+                        isTxTransfer 
+                          ? 'text-indigo-600' 
+                          : tx.type === 'income' 
+                            ? 'text-emerald-600' 
+                            : 'text-zinc-900'
+                      }`}>
+                        <span className="inline-flex items-center gap-1 justify-end w-full">
+                          {isTxTransfer && <span className="text-xs text-indigo-400">⇄</span>}
+                          <span>{tx.type === 'income' ? '+' : '-'}${Number(tx.amount).toFixed(2)}</span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onEdit(tx)}
+                            className="text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200 h-8 w-8 p-0"
+                            title="Edit Transaction"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => onDelete(tx.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            title="Delete Transaction"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -81,3 +107,4 @@ export function TransactionTable({ transactions, isLoading, onEdit, onDelete }: 
     </Card>
   );
 }
+

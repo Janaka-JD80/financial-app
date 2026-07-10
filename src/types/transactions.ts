@@ -27,3 +27,6 @@ export interface TransactionPayload {
   is_recurring?: boolean;
   recurrence_interval?: string;
 }
+
+export type TransactionTypeExtended = TransactionType | 'transfer';
+
