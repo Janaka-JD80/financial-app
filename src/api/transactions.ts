@@ -2,9 +2,20 @@ import { supabase } from '../lib/supabase';
 import { Transaction, TransactionPayload } from '../types';
 
 export const createTransaction = async (payload: TransactionPayload): Promise<Transaction[]> => {
+  const { 
+    to_account_id, 
+    accounts, 
+    categories, 
+    transaction_groups, 
+    isTransfer, 
+    transferId, 
+    userDescription, 
+    ...dbPayload 
+  } = payload as any;
+
   const { data, error } = await supabase
     .from('transactions')
-    .insert([payload])
+    .insert([dbPayload])
     .select();
   if (error) throw error;
   return data;
@@ -30,9 +41,20 @@ export const getTransactions = async (startDate?: string, endDate?: string): Pro
 };
 
 export const updateTransaction = async (id: string, updates: any) => {
+  const { 
+    to_account_id, 
+    accounts, 
+    categories, 
+    transaction_groups, 
+    isTransfer, 
+    transferId, 
+    userDescription, 
+    ...dbUpdates 
+  } = updates;
+
   const { data, error } = await supabase
     .from('transactions')
-    .update(updates)
+    .update(dbUpdates)
     .eq('id', id)
     .select();
   if (error) throw error;
