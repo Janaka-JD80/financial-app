@@ -12,7 +12,6 @@
     "test": "jest"
   },
   "dependencies": {
-    "@google/genai": "^1.29.0",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.98.0",
     "@tailwindcss/vite": "^4.1.14",
