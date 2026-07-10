@@ -2,13 +2,13 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 import { Layout } from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import Accounts from './pages/Accounts';
-import AssetsLiabilities from './pages/AssetsLiabilities';
-import Reports from './pages/Reports';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
+import Dashboard from './pages/dashboard/Dashboard';
+import Transactions from './pages/transactions/Transactions';
+import Accounts from './pages/accounts/Accounts';
+import AssetsLiabilities from './pages/assets-liabilities/AssetsLiabilities';
+import Reports from './pages/reports/Reports';
+import Login from './pages/login/Login';
+import Signup from './pages/signup/Signup';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const queryClient = new QueryClient();
