@@ -14,6 +14,8 @@ export interface Transaction {
   accounts?: { name: string };
   categories?: { name: string };
   transaction_groups?: { name: string };
+  event_id?: string | null;
+  events?: { name: string };
 }
 
 export interface TransactionPayload {
@@ -26,6 +28,7 @@ export interface TransactionPayload {
   description?: string;
   is_recurring?: boolean;
   recurrence_interval?: string;
+  event_id?: string | null;
 }
 
 export type TransactionTypeExtended = TransactionType | 'transfer';

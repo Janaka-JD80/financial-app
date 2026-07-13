@@ -6,3 +6,4 @@ export * from './useAssets';
 export * from './useLiabilities';
 export * from './useFunds';
 export * from './useReports';
+export * from './useEvents';

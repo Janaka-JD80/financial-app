@@ -7,6 +7,9 @@ import Transactions from './pages/transactions/Transactions';
 import Accounts from './pages/accounts/Accounts';
 import AssetsLiabilities from './pages/assets-liabilities/AssetsLiabilities';
 import Reports from './pages/reports/Reports';
+import Events from './pages/events/Events';
+import EventDetails from './pages/events/EventDetails';
+import Profile from './pages/profile/Profile';
 import Login from './pages/login/Login';
 import Signup from './pages/signup/Signup';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -35,6 +38,10 @@ export default function App() {
               <Route path="accounts" element={<Accounts />} />
               <Route path="assets" element={<AssetsLiabilities />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="events" element={<Events />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="events/:id" element={<EventDetails />} />
+             
             </Route>
           </Routes>
         </Router>
