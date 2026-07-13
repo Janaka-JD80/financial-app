@@ -76,7 +76,7 @@ export function TransactionForm({
   isPending,
 }: TransactionFormProps) {
 
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<TransactionFormValues>({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue, setError } = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'expense',
@@ -138,6 +138,28 @@ export function TransactionForm({
   }, [editingTransaction, reset, onTypeChange]);
 
   const handleFormSubmit = (data: TransactionFormValues) => {
+    if (data.type === 'expense' || data.type === 'transfer') {
+      const selectedAccount = accounts?.find(a => a.id === data.account_id);
+      if (selectedAccount) {
+        let availableBalance = Number(selectedAccount.balance);
+        
+        if (editingTransaction && editingTransaction.account_id === data.account_id) {
+          if (editingTransaction.type === 'expense' || editingTransaction.isTransfer) {
+            availableBalance += Number(editingTransaction.amount);
+          } else if (editingTransaction.type === 'income') {
+            availableBalance -= Number(editingTransaction.amount);
+          }
+        }
+
+        if (Number(data.amount) > availableBalance) {
+          setError('amount', {
+            type: 'manual',
+            message: `Insufficient funds (Available: $${availableBalance.toFixed(2)})`
+          });
+          return;
+        }
+      }
+    }
     onSubmit(data);
   };
 
