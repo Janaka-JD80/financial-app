@@ -94,10 +94,10 @@ export default function Transactions() {
       const toAccountName = accounts?.find(a => a.id === data.to_account_id)?.name || 'Account';
       const defaultDescription = `Transfer from ${fromAccountName} to ${toAccountName}`;
 
-      if (editingTransactionId && editingTransaction && editingTransaction.isTransfer) {
+      if (editingTransactionId && editingTransaction && 'isTransfer' in editingTransaction && editingTransaction.isTransfer) {
         updateTransfer.mutate(
           {
-            transferId: editingTransaction.transferId,
+            transferId: (editingTransaction as any).transferId,
             updates: {
               from_account_id: data.account_id,
               to_account_id: data.to_account_id,
@@ -184,7 +184,7 @@ export default function Transactions() {
   };
 
   const handleCreateCategory = (name: string) => {
-    createCategory.mutate({ name, type });
+    createCategory.mutate({ name, type: type === 'transfer' ? 'expense' : type });
   };
 
   const handleDeleteCategory = (id: string) => {
@@ -228,7 +228,7 @@ export default function Transactions() {
 
           <CategoryManager
             categories={categories}
-            type={type}
+            type={type === 'transfer' ? 'expense' : type}
             onAdd={handleCreateCategory}
             onDelete={handleDeleteCategory}
             onEdit={handleEditCategory}
@@ -246,8 +246,8 @@ export default function Transactions() {
 
         <div className="lg:col-span-2 space-y-6">
           <Card className="border border-zinc-100 shadow-sm">
-            <CardContent className="p-4 flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1">
+            <CardContent className="p-4 flex flex-col sm:flex-row gap-4 sm:items-end items-stretch">
+              <div className="flex-1 w-full">
                 <label className="block text-xs font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">Start Date</label>
                 <input
                   type="date"
@@ -256,7 +256,7 @@ export default function Transactions() {
                   className="w-full bg-white border border-zinc-200 rounded-xl px-3 py-2 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 w-full">
                 <label className="block text-xs font-semibold text-zinc-500 mb-1.5 uppercase tracking-wider">End Date</label>
                 <input
                   type="date"
@@ -273,7 +273,7 @@ export default function Transactions() {
                     setFilterStartDate('');
                     setFilterEndDate('');
                   }}
-                  className="text-xs h-10 px-4 rounded-xl border-zinc-200 text-zinc-500 hover:text-zinc-900"
+                  className="w-full sm:w-auto text-xs h-10 px-4 rounded-xl border-zinc-200 text-zinc-500 hover:text-zinc-900"
                 >
                   Clear
                 </Button>

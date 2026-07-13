@@ -12,7 +12,8 @@ import {
   ChevronRight, 
   Menu, 
   X,
-  Calendar
+  Calendar,
+  User
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { signOutUser } from '../api/auth';
@@ -117,7 +118,15 @@ export function Layout() {
         </nav>
 
         {/* Drawer Footer */}
-        <div className="p-4 border-t border-zinc-100">
+        <div className="p-4 border-t border-zinc-100 flex flex-col gap-2">
+          <Link
+            to="/profile"
+            onClick={() => setIsMobileOpen(false)}
+            className="flex items-center w-full px-3 py-2.5 text-sm font-medium text-zinc-500 rounded-xl hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-200"
+          >
+            <User className="mr-3 flex-shrink-0 h-5 w-5" aria-hidden="true" />
+            Profile
+          </Link>
           <button
             onClick={() => {
               setIsMobileOpen(false);
@@ -155,17 +164,33 @@ export function Layout() {
           {renderNavLinks()}
         </nav>
 
-        {/* Toggle Button & Logout */}
-        <div className="p-3 border-t border-zinc-100 space-y-2 shrink-0">
+        {/* Desktop Sidebar Footer */}
+        <div className="p-4 border-t border-zinc-200 shrink-0 flex flex-col gap-2">
           {/* Expand/Collapse Toggle Button */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center w-full px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-700 rounded-xl hover:bg-zinc-50 transition-all justify-center md:justify-between"
+            className="flex items-center w-full px-3 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-700 rounded-xl hover:bg-zinc-50 transition-all justify-center md:justify-between mb-2"
           >
             <span className={cn(!isExpanded && "hidden")}>Collapse</span>
             {isExpanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
 
+          <Link
+            to="/profile"
+            className={cn(
+              "flex items-center w-full px-3 py-2.5 text-sm font-medium text-zinc-500 rounded-xl hover:bg-zinc-100 hover:text-zinc-900 transition-all duration-200",
+              !isExpanded && "justify-center px-2"
+            )}
+            title={!isExpanded ? "Profile Settings" : undefined}
+          >
+            <User className={cn("flex-shrink-0 h-5 w-5", isExpanded && "mr-3")} aria-hidden="true" />
+            <span className={cn(
+              'transition-opacity duration-200',
+              !isExpanded && 'hidden'
+            )}>
+              Profile
+            </span>
+          </Link>
           <button
             onClick={handleLogout}
             className={cn(
@@ -175,7 +200,12 @@ export function Layout() {
             title={!isExpanded ? "Logout" : undefined}
           >
             <LogOut className={cn("flex-shrink-0 h-5 w-5", isExpanded && "mr-3")} aria-hidden="true" />
-            {isExpanded && <span>Logout</span>}
+            <span className={cn(
+              'transition-opacity duration-200',
+              !isExpanded && 'hidden'
+            )}>
+              Logout
+            </span>
           </button>
         </div>
       </div>
@@ -199,9 +229,14 @@ export function Layout() {
             <span className="text-lg font-bold tracking-tight">FinManage</span>
           </div>
 
-          <button onClick={handleLogout} className="p-2 text-zinc-500 hover:text-red-600 rounded-lg hover:bg-red-50">
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <Link to="/profile" className="p-2 text-zinc-500 hover:text-emerald-600 rounded-lg hover:bg-emerald-50" title="Profile">
+              <User className="w-5 h-5" />
+            </Link>
+            <button onClick={handleLogout} className="p-2 text-zinc-500 hover:text-red-600 rounded-lg hover:bg-red-50" title="Logout">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
