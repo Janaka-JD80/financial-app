@@ -17,6 +17,7 @@ import {
   useUpdateTransfer,
   useDeleteTransfer
 } from '../../hooks/useApi';
+import { useEvents } from '../../hooks/useEvents';
 import { TransactionForm } from '../../components/transactions/TransactionForm';
 import { TransactionTable } from '../../components/transactions/TransactionTable';
 import { CategoryManager } from '../../components/transactions/CategoryManager';
@@ -38,6 +39,7 @@ export default function Transactions() {
   const { data: incomeCategories } = useCategories('income');
   const { data: expenseCategories } = useCategories('expense');
   const { data: groups } = useActiveGroups();
+  const { data: events } = useEvents();
  
   const createTransaction = useCreateTransaction();
   const updateTransaction = useUpdateTransaction();
@@ -215,6 +217,7 @@ export default function Transactions() {
             incomeCategories={incomeCategories}
             expenseCategories={expenseCategories}
             groups={groups}
+            events={events}
             editingTransaction={editingTransaction}
             type={type}
             onTypeChange={setType}

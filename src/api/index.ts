@@ -7,3 +7,4 @@ export * from './assets';
 export * from './liabilities';
 export * from './funds';
 export * from './reports';
+export * from './events';

@@ -10,6 +10,7 @@ export const createTransaction = async (payload: TransactionPayload): Promise<Tr
     isTransfer, 
     transferId, 
     userDescription, 
+    events,
     ...dbPayload 
   } = payload as any;
 
@@ -28,7 +29,8 @@ export const getTransactions = async (startDate?: string, endDate?: string): Pro
       *,
       accounts(name),
       categories(name),
-      transaction_groups(name)
+      transaction_groups(name),
+      events(name)
     `)
     .order('transaction_date', { ascending: false });
 
@@ -49,6 +51,7 @@ export const updateTransaction = async (id: string, updates: any) => {
     isTransfer, 
     transferId, 
     userDescription, 
+    events,
     ...dbUpdates 
   } = updates;
 

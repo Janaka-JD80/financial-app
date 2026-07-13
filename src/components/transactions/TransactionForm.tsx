@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Input, Select } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { X } from 'lucide-react';
-import { Account, Category, TransactionGroup } from '../../types';
+import { Account, Category, TransactionGroup, Event } from '../../types';
 
 const transactionSchema = z.object({
   type: z.enum(['income', 'expense', 'transfer']),
@@ -15,6 +15,7 @@ const transactionSchema = z.object({
   to_account_id: z.string().optional(),
   category_id: z.string().optional(),
   group_id: z.string().optional(),
+  event_id: z.string().optional(),
   transaction_date: z.string().min(1, 'Date is required'),
   description: z.string().optional(),
   is_recurring: z.boolean().optional(),
@@ -52,6 +53,7 @@ interface TransactionFormProps {
   incomeCategories: Category[] | undefined;
   expenseCategories: Category[] | undefined;
   groups: TransactionGroup[] | undefined;
+  events: Event[] | undefined;
   editingTransaction: any | null;
   type: 'income' | 'expense' | 'transfer';
   onTypeChange: (type: 'income' | 'expense' | 'transfer') => void;
@@ -65,6 +67,7 @@ export function TransactionForm({
   incomeCategories,
   expenseCategories,
   groups,
+  events,
   editingTransaction,
   type,
   onTypeChange,
@@ -95,6 +98,7 @@ export function TransactionForm({
           to_account_id: editingTransaction.to_account_id,
           category_id: '',
           group_id: editingTransaction.group_id || '',
+          event_id: editingTransaction.event_id || '',
           transaction_date: editingTransaction.transaction_date.split('T')[0],
           description: editingTransaction.userDescription || '',
           is_recurring: editingTransaction.is_recurring || false,
@@ -108,6 +112,7 @@ export function TransactionForm({
           account_id: editingTransaction.account_id,
           category_id: editingTransaction.category_id || '',
           group_id: editingTransaction.group_id || '',
+          event_id: editingTransaction.event_id || '',
           transaction_date: editingTransaction.transaction_date.split('T')[0],
           description: editingTransaction.description || '',
           is_recurring: editingTransaction.is_recurring || false,
@@ -123,6 +128,7 @@ export function TransactionForm({
         to_account_id: '',
         category_id: '',
         group_id: '',
+        event_id: '',
         transaction_date: new Date().toISOString().split('T')[0],
         description: '',
         is_recurring: false,
@@ -225,6 +231,15 @@ export function TransactionForm({
               options={groups?.map(g => ({ label: g.name, value: g.id })) || []}
               {...register('group_id')}
               error={errors.group_id?.message}
+            />
+          )}
+
+          {type !== 'transfer' && (
+            <Select
+              label="Event (Optional)"
+              options={events?.map(e => ({ label: e.name, value: e.id })) || []}
+              {...register('event_id')}
+              error={errors.event_id?.message}
             />
           )}
 

@@ -11,7 +11,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Menu, 
-  X 
+  X,
+  Calendar
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { signOutUser } from '../api/auth';
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Accounts', href: '/accounts', icon: Wallet },
   { name: 'Assets', href: '/assets', icon: Briefcase },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Events', href: '/events', icon: Calendar },
 ];
 
 export function Layout() {
