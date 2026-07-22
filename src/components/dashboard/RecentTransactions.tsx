@@ -2,6 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Transaction } from '../../types';
+import { getCleanDescription } from '../../lib/utils';
 
 interface RecentTransactionsProps {
   transactions: Transaction[] | undefined;
@@ -27,7 +28,9 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     {tx.type === 'income' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
                   </div>
                   <div>
-                    <p className="font-medium text-zinc-900">{tx.description || tx.categories?.name || 'Transaction'}</p>
+                    <p className="font-medium text-zinc-900">
+                      {getCleanDescription(tx.description, tx.categories?.name || 'Transaction')}
+                    </p>
                     <p className="text-xs text-zinc-500">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')} • {tx.accounts?.name}</p>
                   </div>
                 </div>

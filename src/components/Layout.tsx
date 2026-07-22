@@ -13,7 +13,8 @@ import {
   Menu, 
   X,
   Calendar,
-  User
+  User,
+  HandCoins
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { signOutUser } from '../api/auth';
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Transactions', href: '/transactions', icon: Receipt },
   { name: 'Accounts', href: '/accounts', icon: Wallet },
   { name: 'Assets', href: '/assets', icon: Briefcase },
+  { name: 'Loans', href: '/loans', icon: HandCoins },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Events', href: '/events', icon: Calendar },
 ];

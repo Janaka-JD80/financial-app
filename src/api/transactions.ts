@@ -14,6 +14,10 @@ export const createTransaction = async (payload: TransactionPayload): Promise<Tr
     ...dbPayload 
   } = payload as any;
 
+  if (dbPayload.category_id === '') dbPayload.category_id = null;
+  if (dbPayload.group_id === '') dbPayload.group_id = null;
+  if (dbPayload.event_id === '') dbPayload.event_id = null;
+
   const { data, error } = await supabase
     .from('transactions')
     .insert([dbPayload])
@@ -54,6 +58,10 @@ export const updateTransaction = async (id: string, updates: any) => {
     events,
     ...dbUpdates 
   } = updates;
+
+  if (dbUpdates.category_id === '') dbUpdates.category_id = null;
+  if (dbUpdates.group_id === '') dbUpdates.group_id = null;
+  if (dbUpdates.event_id === '') dbUpdates.event_id = null;
 
   const { data, error } = await supabase
     .from('transactions')
@@ -175,6 +183,24 @@ export const deleteTransfer = async (transferId: string): Promise<void> => {
     .from('transactions')
     .delete()
     .like('description', `%[Transfer: ${transferId}]%`);
+  if (error) throw error;
+};
+
+export const linkLoanPayback = async (loanId: string, paybackTxId: string, currentDescription: string): Promise<void> => {
+  const newDescription = `[LoanPayback: ${loanId}] ${currentDescription || ''}`.trim();
+  const { error } = await supabase
+    .from('transactions')
+    .update({ description: newDescription })
+    .eq('id', paybackTxId);
+  if (error) throw error;
+};
+
+export const unlinkLoanPayback = async (paybackTxId: string, currentDescription: string): Promise<void> => {
+  const newDescription = currentDescription.replace(/\[LoanPayback:\s*[a-fA-F0-9-]+\]\s*/, '').trim();
+  const { error } = await supabase
+    .from('transactions')
+    .update({ description: newDescription })
+    .eq('id', paybackTxId);
   if (error) throw error;
 };
 

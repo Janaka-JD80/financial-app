@@ -3,7 +3,7 @@ import { Button } from '../ui/Button';
 import { Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Transaction } from '../../types';
-import { isTransferTransaction, parseTransferDescription } from '../../lib/utils';
+import { isTransferTransaction, getCleanDescription } from '../../lib/utils';
 
 interface TransactionTableProps {
   transactions: Transaction[] | undefined;
@@ -41,10 +41,7 @@ export function TransactionTable({ transactions, isLoading, onEdit, onDelete }: 
                 <tbody>
                   {transactions.map((tx) => {
                     const isTxTransfer = isTransferTransaction(tx);
-                    const transferInfo = parseTransferDescription(tx.description);
-                    const displayDescription = transferInfo 
-                      ? (transferInfo.userDescription || `Transfer to/from Account`)
-                      : tx.description || '-';
+                    const displayDescription = getCleanDescription(tx.description, '-');
 
                     return (
                       <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
@@ -107,10 +104,7 @@ export function TransactionTable({ transactions, isLoading, onEdit, onDelete }: 
             <div className="md:hidden space-y-3">
               {transactions.map((tx) => {
                 const isTxTransfer = isTransferTransaction(tx);
-                const transferInfo = parseTransferDescription(tx.description);
-                const displayDescription = transferInfo 
-                  ? (transferInfo.userDescription || `Transfer to/from Account`)
-                  : tx.description || '-';
+                const displayDescription = getCleanDescription(tx.description, '-');
 
                 return (
                   <div key={tx.id} className="p-4 border border-zinc-100 rounded-2xl bg-zinc-50/30 hover:bg-zinc-50 transition-all duration-200 space-y-3">

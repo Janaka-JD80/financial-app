@@ -98,8 +98,9 @@ export default function Events() {
             <h2 className="text-xl font-bold mb-4">Create New Event</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Event Name</label>
+                <label htmlFor="eventName" className="block text-sm font-medium text-zinc-700 mb-1">Event Name</label>
                 <input
+                  id="eventName"
                   type="text"
                   required
                   value={name}
@@ -110,8 +111,9 @@ export default function Events() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">Start Date</label>
+                  <label htmlFor="startDate" className="block text-sm font-medium text-zinc-700 mb-1">Start Date</label>
                   <input
+                    id="startDate"
                     type="date"
                     required
                     value={startDate}
@@ -120,8 +122,9 @@ export default function Events() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-700 mb-1">End Date</label>
+                  <label htmlFor="endDate" className="block text-sm font-medium text-zinc-700 mb-1">End Date</label>
                   <input
+                    id="endDate"
                     type="date"
                     required
                     min={startDate}
