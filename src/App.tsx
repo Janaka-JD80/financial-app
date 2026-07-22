@@ -7,6 +7,7 @@ import Transactions from './pages/transactions/Transactions';
 import Accounts from './pages/accounts/Accounts';
 import AssetsLiabilities from './pages/assets-liabilities/AssetsLiabilities';
 import Reports from './pages/reports/Reports';
+import Loans from './pages/loans/Loans';
 import Events from './pages/events/Events';
 import EventDetails from './pages/events/EventDetails';
 import Profile from './pages/profile/Profile';
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="accounts" element={<Accounts />} />
               <Route path="assets" element={<AssetsLiabilities />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="loans" element={<Loans />} />
               <Route path="events" element={<Events />} />
               <Route path="profile" element={<Profile />} />
               <Route path="events/:id" element={<EventDetails />} />

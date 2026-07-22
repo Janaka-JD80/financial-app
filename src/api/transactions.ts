@@ -186,3 +186,21 @@ export const deleteTransfer = async (transferId: string): Promise<void> => {
   if (error) throw error;
 };
 
+export const linkLoanPayback = async (loanId: string, paybackTxId: string, currentDescription: string): Promise<void> => {
+  const newDescription = `[LoanPayback: ${loanId}] ${currentDescription || ''}`.trim();
+  const { error } = await supabase
+    .from('transactions')
+    .update({ description: newDescription })
+    .eq('id', paybackTxId);
+  if (error) throw error;
+};
+
+export const unlinkLoanPayback = async (paybackTxId: string, currentDescription: string): Promise<void> => {
+  const newDescription = currentDescription.replace(/\[LoanPayback:\s*[a-fA-F0-9-]+\]\s*/, '').trim();
+  const { error } = await supabase
+    .from('transactions')
+    .update({ description: newDescription })
+    .eq('id', paybackTxId);
+  if (error) throw error;
+};
+

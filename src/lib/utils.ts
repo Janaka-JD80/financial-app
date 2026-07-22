@@ -22,6 +22,35 @@ export function parseTransferDescription(description: string | null | undefined)
   return null;
 }
 
+export interface LoanPaybackInfo {
+  loanId: string;
+  userDescription: string;
+}
+
+export function parseLoanPaybackDescription(description: string | null | undefined): LoanPaybackInfo | null {
+  if (!description) return null;
+  const match = description.match(/^\[LoanPayback:\s*([a-fA-F0-9-]+)\]\s*(.*)$/);
+  if (match) {
+    return {
+      loanId: match[1],
+      userDescription: match[2].trim()
+    };
+  }
+  return null;
+}
+
+export function getCleanDescription(description: string | null | undefined, fallback: string = '-'): string {
+  if (!description) return fallback;
+  
+  const transferInfo = parseTransferDescription(description);
+  if (transferInfo) return transferInfo.userDescription || 'Transfer';
+  
+  const loanPaybackInfo = parseLoanPaybackDescription(description);
+  if (loanPaybackInfo) return loanPaybackInfo.userDescription || 'Loan Payback';
+  
+  return description;
+}
+
 export function isTransferTransaction(tx: {
   description?: string | null;
   categories?: { name: string } | null;

@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Transaction } from '../../types';
-import { parseTransferDescription } from '../../lib/utils';
+import { getCleanDescription } from '../../lib/utils';
 
 interface RecentTransactionsProps {
   transactions: Transaction[] | undefined;
@@ -29,7 +29,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                   </div>
                   <div>
                     <p className="font-medium text-zinc-900">
-                      {parseTransferDescription(tx.description)?.userDescription || tx.description || tx.categories?.name || 'Transaction'}
+                      {getCleanDescription(tx.description, tx.categories?.name || 'Transaction')}
                     </p>
                     <p className="text-xs text-zinc-500">{format(new Date(tx.transaction_date), 'MMM dd, yyyy')} • {tx.accounts?.name}</p>
                   </div>
