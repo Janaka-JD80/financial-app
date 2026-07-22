@@ -82,7 +82,7 @@ export default function Loans() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-zinc-400 font-medium mb-1">Total Loans Given</p>
-                <h3 className="text-3xl font-bold">${totalLoans.toFixed(2)}</h3>
+                <h3 className="text-3xl font-bold text-zinc-900">${totalLoans.toFixed(2)}</h3>
               </div>
               <div className="p-3 bg-white/10 rounded-xl">
                 <HandCoins className="w-5 h-5 text-zinc-300" />

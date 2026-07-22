@@ -6,7 +6,7 @@
 // tabs) using React Testing Library's "fireEvent" utilities.
 // ============================================================================
 
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Transactions from './Transactions';
 import { 
   useTransactions, 
@@ -105,5 +105,47 @@ describe('Transactions Page', () => {
     fireEvent.click(expenseBtn);
     // Verify that the UI updates to show the expense helper message
     expect(screen.getByText('Creates a new expense category')).toBeInTheDocument();
+  });
+
+  // --------------------------------------------------------------------------
+  // TEST CASE 3: Testing Form Submission for creating a transaction
+  // --------------------------------------------------------------------------
+  it('fills form and creates a new transaction', async () => {
+    const mutateMock = jest.fn();
+    mockUseCreateTransaction.mockReturnValue({ mutate: mutateMock, isPending: false });
+
+    // Ensure we have some default categories/accounts
+    mockUseAccounts.mockReturnValue({ data: [{ id: 'acc1', name: 'Main Account' }] });
+    mockUseCategories.mockReturnValue({ data: [{ id: 'cat1', name: 'Food' }] });
+
+    render(<Transactions />);
+
+    // Fill amount
+    const amountInput = screen.getByLabelText(/Amount/i);
+    fireEvent.change(amountInput, { target: { value: '50' } });
+
+    // Select account
+    const accountSelect = screen.getByLabelText(/Account/i);
+    fireEvent.change(accountSelect, { target: { value: 'acc1' } });
+
+    // Select category
+    const categorySelect = screen.getByLabelText(/Category/i);
+    fireEvent.change(categorySelect, { target: { value: 'cat1' } });
+
+    // Submit form
+    const submitBtn = screen.getByRole('button', { name: /Save Transaction/i });
+    fireEvent.click(submitBtn);
+
+    // Verify API call was made
+    await waitFor(() => {
+      expect(mutateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 50,
+          account_id: 'acc1',
+          category_id: 'cat1',
+          type: 'expense'
+        })
+      );
+    });
   });
 });
