@@ -14,6 +14,10 @@ export const createTransaction = async (payload: TransactionPayload): Promise<Tr
     ...dbPayload 
   } = payload as any;
 
+  if (dbPayload.category_id === '') dbPayload.category_id = null;
+  if (dbPayload.group_id === '') dbPayload.group_id = null;
+  if (dbPayload.event_id === '') dbPayload.event_id = null;
+
   const { data, error } = await supabase
     .from('transactions')
     .insert([dbPayload])
@@ -54,6 +58,10 @@ export const updateTransaction = async (id: string, updates: any) => {
     events,
     ...dbUpdates 
   } = updates;
+
+  if (dbUpdates.category_id === '') dbUpdates.category_id = null;
+  if (dbUpdates.group_id === '') dbUpdates.group_id = null;
+  if (dbUpdates.event_id === '') dbUpdates.event_id = null;
 
   const { data, error } = await supabase
     .from('transactions')
